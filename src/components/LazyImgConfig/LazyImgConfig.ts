@@ -30,8 +30,6 @@ export class LazyImgConfig extends LitElement {
 
   // 更新全局配置
   updated() {
-    console.log('=====>', this.domains);
-
     LazyImgConfig.globalConfig = {
       ...LazyImgConfig.globalConfig,
       fallback: this.fallback,

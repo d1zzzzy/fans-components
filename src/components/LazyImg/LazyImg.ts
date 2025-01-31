@@ -128,8 +128,6 @@ export class LazyImg extends LitElement {
     const img = this.shadowRoot?.querySelector('img');
     const config = this._effectiveConfig;
 
-    console.log(config);
-
     if (!img) return;
 
     while (config.domains && (this._currentDomainIndex < config.domains.length)) {
@@ -221,12 +219,11 @@ export class LazyImg extends LitElement {
   // 合并全局配置和组件属性
   private get _effectiveConfig(): LazyImgGlobalConfig {
     const { domains, fallback } = LazyImgConfig.globalConfig;
-    console.log('LazyImgConfig.globalConfig', LazyImgConfig.globalConfig);
 
     return {
       ...LazyImgConfig.globalConfig,
 
-      domains: this.domains.length ? this.domains : domains,
+      domains: (this.domains && this.domains.length) ? this.domains : domains,
       fallback: this.fallback || fallback,
     }
   }
