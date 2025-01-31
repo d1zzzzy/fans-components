@@ -1,6 +1,8 @@
 import { TemplateResult, LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 
+import { LazyImgConfig, LazyImgGlobalConfig, LoadingType } from '../LazyImgConfig/LazyImgConfig.js';
+
 export class LazyImg extends LitElement {
   static styles = css`
     :host {
@@ -79,6 +81,8 @@ export class LazyImg extends LitElement {
 
   @property({ type: Object }) loadingSlot: TemplateResult | null = null; // 加载状态插槽
 
+  @property({ type: String }) loadingType: LoadingType = "spinner";
+
   private _observer: IntersectionObserver | null = null;
 
   private _currentDomainIndex = 0; // 当前尝试的域名索引
@@ -122,10 +126,14 @@ export class LazyImg extends LitElement {
   // 加载图片
   private async _loadImage() {
     const img = this.shadowRoot?.querySelector('img');
+    const config = this._effectiveConfig;
+
+    console.log(config);
+
     if (!img) return;
 
-    while (this.domains && (this._currentDomainIndex < this.domains.length)) {
-      const domain = this.domains[this._currentDomainIndex];
+    while (config.domains && (this._currentDomainIndex < config.domains.length)) {
+      const domain = config.domains[this._currentDomainIndex];
 
       try {
         const src = new URL(`${domain}${this.src}`).href; // 使用 new URL 确保 src 是绝对路径
@@ -165,7 +173,7 @@ export class LazyImg extends LitElement {
     };
 
     // 所有域名加载失败，设置错误状态并尝试加载备用图片
-    if (this.fallback) {
+    if (config.fallback) {
       img.src = this.fallback;
     } else {
       img.src = this.src;
@@ -179,10 +187,16 @@ export class LazyImg extends LitElement {
         ${
           this._isError
             ? null
-            : html`<img
-            src=''
-            alt=${this.alt || '图片'}
-          />`
+            : (
+              html`
+                <img
+                  src=''
+                  alt=${this.alt || '图片'}
+                  @load=${this._handleLoad}
+                  @error=${this._handleError}
+                />
+              `
+            )
         }
       </div>
     `;
@@ -202,5 +216,27 @@ export class LazyImg extends LitElement {
     }
 
     return null;
+  }
+
+  // 合并全局配置和组件属性
+  private get _effectiveConfig(): LazyImgGlobalConfig {
+    const { domains, fallback } = LazyImgConfig.globalConfig;
+    console.log('LazyImgConfig.globalConfig', LazyImgConfig.globalConfig);
+
+    return {
+      ...LazyImgConfig.globalConfig,
+
+      domains: this.domains.length ? this.domains : domains,
+      fallback: this.fallback || fallback,
+    }
+  }
+
+  // 触发事件
+  private _handleLoad() {
+    this.dispatchEvent(new CustomEvent('load', { detail: { src: this.src } }));
+  }
+
+  private _handleError() {
+    this.dispatchEvent(new CustomEvent('error', { detail: { src: this.src } }));
   }
 }

@@ -1,4 +1,5 @@
 import { html, TemplateResult } from 'lit';
+import '../../dist/src/components/LazyImgConfig/index.js';
 import '../../dist/src/components/LazyImg/index.js';
 
 export default {
